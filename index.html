@@ -14,13 +14,23 @@
   <!-- Load Esri Leaflet from CDN -->
   <script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"
     integrity="sha256-uqgmWaQPSR4MnmCnfjY48gUPuyeaFHYZ2gDdJqw2QkQ=" crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/esri-leaflet-vector@4.2.5/dist/esri-leaflet-vector.js"
-    integrity="sha256-YqWkRUgWKnrBDitUi4JKqOqHI7W++DbHVCmwqzizo6E=" crossorigin="anonymous"></script>
+  <!-- <script src="https://unpkg.com/esri-leaflet-vector@4.2.5/dist/esri-leaflet-vector.js" -->
+  <!--   integrity="sha256-YqWkRUgWKnrBDitUi4JKqOqHI7W++DbHVCmwqzizo6E=" crossorigin="anonymous"></script> -->
+  <script src="https://unpkg.com/esri-leaflet-legend@2.0.1/dist/esri-leaflet-legend.js"
+    integrity="sha256-VUaJcy3hbi3EVMyUah/cP5MptNbAH2MLGqyF86yj960=" crossorigin="anonymous"></script>
+  <!-- <script src="https://unpkg.com/esri-leaflet-renderers@3.0.1/dist/esri-leaflet-renderers.js" -->
+  <!--   integrity="sha256-UolAFnVwljk1gX/16s7vvHwqIz6cy7dZhUezgYmay+s=" crossorigin="anonymous"></script> -->
 
   <style>
     body {
       margin: 0;
       padding: 0;
+    }
+
+    ul {
+      list-style: none;
+      padding-inline: 0;
+      margin-block: .5em;
     }
 
     #map {
@@ -32,6 +42,14 @@
       font-family: Arial, Helvetica, sans-serif;
       font-size: 14px;
       color: #323232;
+    }
+
+    .leaflet-legend-control {
+      background: white;
+      padding: 1em;
+      max-height: 300px;
+      overflow: auto;
+      font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
     }
   </style>
 </head>
@@ -74,6 +92,21 @@
     });
 
     L.control.layers(rainLayers).addTo(map);
+
+    // This produces a legend from the MapServer, however it fetches all layers at once
+    const legend = L.esri.legendControl(L.esri.dynamicMapLayer(opts),
+      {position: 'bottomleft'}
+    ).addTo(map);
+
+    const legendDiv = legend.getContainer();
+
+    // Adjust legend after if finishes loading
+    window.addEventListener("load", ev => {
+      // Remove extra data from the legend
+      legendDiv.innerHTML = legendDiv.firstChild.children[2].innerHTML;
+      // Change legend title
+      legendDiv.firstChild.innerHTML = "Accumulated Precipitaion (inches)"
+    });
   </script>
 </body>
 
