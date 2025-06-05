@@ -67,8 +67,10 @@
       }
     );
 
+    const baseURL = "https://mapservices.weather.noaa.gov/raster/rest/services/obs/rfc_qpe/MapServer";
+
     const opts = {
-      url: "https://mapservices.weather.noaa.gov/raster/rest/services/obs/rfc_qpe/MapServer",
+      url: baseURL,
       format: "svg",
       f: "image",
       opacity: .35
@@ -93,6 +95,12 @@
 
     L.control.layers(rainLayers).addTo(map);
 
+    // Track the currently active rain layer
+    let currentRainLayer = 36; // Start with the initial value
+    map.on("baselayerchange", e => {
+      currentRainLayer = e.layer.options.layers[0];
+    });
+
     // This produces a legend from the MapServer, however it fetches all layers at once
     const legend = L.esri.legendControl(L.esri.dynamicMapLayer(opts),
       {position: 'bottomleft'}
@@ -107,6 +115,52 @@
       // Change legend title
       legendDiv.firstChild.innerHTML = "Accumulated Precipitaion (inches)"
     });
+
+    // Add a popup on click
+    const popup = L.popup();
+
+    function onMapClick(e) {
+      // Get the request parameters
+      const bounds = map.getBounds();
+      const mapExtent = [
+        bounds.getWest(), // xmin
+        bounds.getSouth(), // ymin
+        bounds.getEast(), // xmax
+        bounds.getNorth() // ymax
+      ].join(",");
+      const container = map.getSize(); // returns {x: width, y: height } in pixels
+      const imageDisplay = `${container.x},${container.y},96`; // Assuming 96dpi
+
+      // Construct the URL
+      const url = new URL(`${baseURL}/identify`);
+
+      const params = {
+        f: "json",
+        geometry: JSON.stringify({
+          x: e.latlng.lng,
+          y: e.latlng.lat,
+          spatialReference: {wkid: 4326}
+        }),
+        geometryType: "esriGeometryPoint",
+        sr: 4326,
+        mapExtent,
+        imageDisplay,
+        layers: `visible:${currentRainLayer}`,
+        tolerance: 3,
+        returnGeometry: true
+      };
+
+      Object.entries(params).forEach(([key, val]) => url.searchParams.append(key, val));
+
+      fetch(url).then(res => res.json()).then(data => {
+        popup
+          .setLatLng({lng: data.results[0].geometry.x, lat: data.results[0].geometry.y})
+          .setContent(`${data.results[0].attributes["Service Pixel Value"]} inches`)
+          .openOn(map);
+      });
+    }
+
+    map.on("click", onMapClick);
   </script>
 </body>
 
