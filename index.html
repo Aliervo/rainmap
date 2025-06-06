@@ -77,6 +77,14 @@
     };
 
     const rainLayers = {
+      "Last 12 hours": L.esri.dynamicMapLayer({
+        ...opts,
+        layers: [24],
+      }),
+      "Last 24 hours": L.esri.dynamicMapLayer({
+        ...opts,
+        layers: [28],
+      }),
       "Last 2 days": L.esri.dynamicMapLayer({
         ...opts,
         layers: [36],
